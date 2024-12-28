@@ -1,0 +1,64 @@
+graph TB
+    subgraph User_Interface
+        UI[Web Password Dialog]
+        UI_Bridge[Qt Bridge]
+    end
+
+    subgraph Core_Security
+        SCM[SecureCredentials Manager]
+        KDF[Key Derivation - PBKDF2]
+        Fernet[Fernet Encryption]
+        Salt[Salt Management]
+    end
+
+    subgraph Platform_Specific
+        Win[Windows Registry]
+        Mac[macOS Keychain]
+        Linux[Linux Machine ID]
+        Config[Config Directory]
+    end
+
+    subgraph Storage_Layer
+        YAML[YAML Storage]
+        SQLite[SQLite Storage]
+        Keyring[System Keyring]
+    end
+
+    %% User Interface Flow
+    UI -->|Password Input| UI_Bridge
+    UI_Bridge -->|Validation| SCM
+    UI_Bridge -->|Rate Limiting| UI
+    UI_Bridge -->|Error Handling| UI
+
+    %% Core Security Flow
+    SCM -->|Generate Salt| Salt
+    SCM -->|Derive Key| KDF
+    KDF -->|Key| Fernet
+    Salt -->|Salt Value| KDF
+    SCM -->|Machine Verification| Platform_Specific
+    SCM -->|Store/Retrieve| Storage_Layer
+
+    %% Platform Detection
+    SCM -->|Platform Check| Win
+    SCM -->|Platform Check| Mac
+    SCM -->|Platform Check| Linux
+    Win -->|Store Location| Config
+    Mac -->|Store Location| Config
+    Linux -->|Store Location| Config
+
+    %% Storage Operations
+    SCM -->|Encrypt| YAML
+    SCM -->|Encrypt| SQLite
+    SCM -->|Store Key ID| Keyring
+    YAML -->|Encrypted Data| Config
+    SQLite -->|Encrypted Data| Config
+
+    classDef interface fill:#f9f,stroke:#333,stroke-width:2px
+    classDef security fill:#ff9,stroke:#333,stroke-width:2px
+    classDef platform fill:#9f9,stroke:#333,stroke-width:2px
+    classDef storage fill:#99f,stroke:#333,stroke-width:2px
+
+    class UI,UI_Bridge interface
+    class SCM,KDF,Fernet,Salt security
+    class Win,Mac,Linux,Config platform
+    class YAML,SQLite,Keyring storage
